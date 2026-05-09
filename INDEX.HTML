@@ -77,14 +77,17 @@
             <input type="password" id="senhaAdmin" placeholder="Digite a senha">
             <button onclick="fazerLogin()" style="background:#ee4d2d; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin-top:0.5rem; font-weight:bold;">Entrar</button>
             <p style="margin-top:1rem; font-size:0.8rem; color:#666; text-align:center;">Senha padrão: <strong>admin123</strong></p>
+            <p style="font-size:0.7rem; color:#999; text-align:center; margin-top:0.5rem;">⚠️ As alterações são salvas apenas para você!</p>
         </div>
         
         <!-- Tela de gerenciamento (só aparece após login) -->
         <div id="adminDiv" style="display:none;">
-            <h3>📦 Seus Produtos</h3>
-            <button onclick="abrirFormularioProduto()" style="background:#10b981; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin:1rem 0; font-weight:bold; cursor:pointer;">➕ Adicionar Novo Produto</button>
+            <h3>📦 Seus Produtos (Edição Local)</h3>
+            <p style="font-size:0.7rem; color:#666; margin-bottom:0.5rem;">⚠️ As alterações só aparecem para você. Para todos verem, edite o código diretamente.</p>
+            <button onclick="abrirFormularioProduto()" style="background:#10b981; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin:1rem 0; font-weight:bold; cursor:pointer;">➕ Adicionar Produto (local)</button>
             <div id="listaProdutosAdmin"></div>
-            <button onclick="fecharAdmin()" style="background:#64748b; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin-top:1rem; cursor:pointer;">Fechar</button>
+            <button onclick="gerarCodigoAtualizado()" style="background:#8b5cf6; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin:0.5rem 0; font-weight:bold; cursor:pointer;">📋 Gerar Código Atualizado (para colar no GitHub)</button>
+            <button onclick="fecharAdmin()" style="background:#64748b; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin-top:0.5rem; cursor:pointer;">Fechar</button>
         </div>
     </div>
 
@@ -113,14 +116,15 @@
         <input type="text" id="inputParcelamento" placeholder="Ex: 4x de R$19,98">
         
         <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-            <button onclick="salvarProdutoForm()" class="btn-salvar" style="flex:1;">💾 Salvar Produto</button>
+            <button onclick="salvarProdutoForm()" class="btn-salvar" style="flex:1;">💾 Salvar Produto (local)</button>
             <button onclick="fecharModalProduto()" class="btn-cancelar" style="flex:1;">Cancelar</button>
         </div>
     </div>
 
     <script>
-        // ========== PRODUTOS PADRÃO ==========
-        let produtos = [
+        // ========== PRODUTOS PADRÃO (TODOS OS VISITANTES VEEM ISSO) ==========
+        // ⚠️ EDITE ESTA LISTA DIRETAMENTE PARA MUDAR OS PRODUTOS PARA TODOS! ⚠️
+        let PRODUTOS_PUBLICOS = [
             {
                 id: 1,
                 nome: "Fone Bluetooth 5.3 - 40h de bateria",
@@ -138,46 +142,48 @@
                 imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
                 linkShopee: "https://shopee.com.br/produto/456",
                 parcelamento: "6x de R$21,65"
+            },
+            {
+                id: 3,
+                nome: "Caixa de Som Bluetooth Portátil",
+                precoPromocional: 99.90,
+                precoOriginal: 199.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Caixa+de+Som",
+                linkShopee: "https://shopee.com.br/produto/789",
+                parcelamento: "3x de R$33,30"
             }
         ];
         
+        // Produtos editáveis localmente (só para você)
+        let produtosLocal = [];
         let adminLogado = false;
         let editandoId = null;
         
-        // Salvar produtos no localStorage
-        function salvarProdutos() {
-            localStorage.setItem('shopee_produtos', JSON.stringify(produtos));
-        }
-        
-        function carregarProdutosSalvos() {
-            const salvos = localStorage.getItem('shopee_produtos');
+        // Carregar produtos locais do localStorage
+        function carregarProdutosLocal() {
+            const salvos = localStorage.getItem('shopee_produtos_local');
             if (salvos) {
-                produtos = JSON.parse(salvos);
-            }
-            renderizarProdutos();
-        }
-        
-        // Pré-visualização da imagem
-        function atualizarPreviewImagem() {
-            const url = document.getElementById('inputImagem').value;
-            const previewDiv = document.getElementById('previewImagem');
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
-                previewDiv.innerHTML = `<img src="${url}" class="image-preview" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div style=\\'color:red; font-size:0.7rem;\\'>⚠️ Imagem não carregou. Verifique a URL.</div>'"><div style="font-size:0.7rem; color:#666; margin-top:0.3rem;">✅ Pré-visualização</div>`;
+                produtosLocal = JSON.parse(salvos);
             } else {
-                previewDiv.innerHTML = '<div style="color:#999; font-size:0.8rem;">📷 Pré-visualização da imagem aparecerá aqui</div>';
+                produtosLocal = [...PRODUTOS_PUBLICOS];
             }
         }
         
-        // Renderizar produtos na tela pública
+        function salvarProdutosLocal() {
+            localStorage.setItem('shopee_produtos_local', JSON.stringify(produtosLocal));
+        }
+        
+        // Renderizar produtos (prioriza os locais se existirem)
         function renderizarProdutos() {
             const container = document.getElementById('productsContainer');
+            const produtosParaMostrar = produtosLocal.length > 0 ? produtosLocal : PRODUTOS_PUBLICOS;
             
-            if (!produtos || produtos.length === 0) {
+            if (!produtosParaMostrar || produtosParaMostrar.length === 0) {
                 container.innerHTML = '<div style="text-align:center;padding:3rem;">⚠️ Nenhum produto disponível no momento.</div>';
                 return;
             }
             
-            container.innerHTML = produtos.map(prod => `
+            container.innerHTML = produtosParaMostrar.map(prod => `
                 <div class="product-card">
                     <img class="card-img" src="${prod.imagem}" onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Produto'" alt="${prod.nome}">
                     <div class="card-content">
@@ -207,7 +213,6 @@
         // ========== ADMIN (escondido dos clientes) ==========
         let cliqueRodape = 0;
         
-        // Mostrar botão admin após 5 cliques no rodapé
         document.querySelector('.footer').addEventListener('click', () => {
             cliqueRodape++;
             if(cliqueRodape === 5) {
@@ -244,7 +249,7 @@
                 document.getElementById('loginDiv').style.display = 'none';
                 document.getElementById('adminDiv').style.display = 'block';
                 atualizarListaAdmin();
-                alert('✅ Login realizado! Agora você pode gerenciar seus produtos.');
+                alert('✅ Login realizado! Lembre-se: as edições são apenas para você.');
             } else {
                 alert('❌ Senha incorreta!');
             }
@@ -254,12 +259,14 @@
             const lista = document.getElementById('listaProdutosAdmin');
             if (!lista) return;
             
-            if (produtos.length === 0) {
+            const produtosMostrar = produtosLocal.length > 0 ? produtosLocal : PRODUTOS_PUBLICOS;
+            
+            if (produtosMostrar.length === 0) {
                 lista.innerHTML = '<p style="text-align:center; padding:1rem; color:#666;">Nenhum produto cadastrado. Clique em "Adicionar Produto" para começar!</p>';
                 return;
             }
             
-            lista.innerHTML = produtos.map(prod => `
+            lista.innerHTML = produtosMostrar.map(prod => `
                 <div class="produto-item">
                     <img class="produto-imagem-preview" src="${prod.imagem}" onerror="this.src='https://via.placeholder.com/60x60/ee4d2d/white?text=Erro'" alt="">
                     <div class="produto-info">
@@ -274,14 +281,24 @@
             `).join('');
         }
         
+        function atualizarPreviewImagem() {
+            const url = document.getElementById('inputImagem').value;
+            const previewDiv = document.getElementById('previewImagem');
+            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+                previewDiv.innerHTML = `<img src="${url}" class="image-preview" onerror="this.style.display='none'; this.parentElement.innerHTML+='<div style=\\'color:red; font-size:0.7rem;\\'>⚠️ Imagem não carregou</div>'"><div style="font-size:0.7rem; color:#666;">✅ Pré-visualização</div>`;
+            } else {
+                previewDiv.innerHTML = '<div style="color:#999; font-size:0.8rem;">📷 Pré-visualização da imagem aparecerá aqui</div>';
+            }
+        }
+        
         function abrirFormularioProduto(id = null) {
             editandoId = id;
             const modal = document.getElementById('produtoModal');
             const titulo = document.getElementById('modalTitulo');
+            const produtosMostrar = produtosLocal.length > 0 ? produtosLocal : PRODUTOS_PUBLICOS;
             
             if (id) {
-                // Editar produto existente
-                const prod = produtos.find(p => p.id === id);
+                const prod = produtosMostrar.find(p => p.id === id);
                 if (prod) {
                     titulo.innerText = '✏️ Editar Produto';
                     document.getElementById('inputNome').value = prod.nome;
@@ -293,7 +310,6 @@
                     atualizarPreviewImagem();
                 }
             } else {
-                // Novo produto
                 titulo.innerText = '➕ Adicionar Produto';
                 document.getElementById('inputNome').value = '';
                 document.getElementById('inputPrecoPromo').value = '';
@@ -330,22 +346,26 @@
             const imagemFinal = imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto';
             
             if (editandoId) {
-                // Editar
-                const index = produtos.findIndex(p => p.id === editandoId);
+                const index = produtosLocal.findIndex(p => p.id === editandoId);
                 if (index !== -1) {
-                    produtos[index] = {
-                        ...produtos[index],
+                    produtosLocal[index] = {
+                        ...produtosLocal[index],
                         nome: nome,
                         precoPromocional: precoPromo,
                         precoOriginal: precoOrig,
                         linkShopee: link,
                         imagem: imagemFinal,
-                        parcelamento: parcelamento || produtos[index].parcelamento
+                        parcelamento: parcelamento || produtosLocal[index].parcelamento
                     };
+                } else {
+                    const indexPublico = PRODUTOS_PUBLICOS.findIndex(p => p.id === editandoId);
+                    if (indexPublico !== -1) {
+                        produtosLocal.push({...PRODUTOS_PUBLICOS[indexPublico], ...{nome, precoPromocional: precoPromo, precoOriginal: precoOrig, linkShopee: link, imagem: imagemFinal, parcelamento}});
+                        PRODUTOS_PUBLICOS.splice(indexPublico, 1);
+                    }
                 }
             } else {
-                // Adicionar novo
-                produtos.push({
+                produtosLocal.push({
                     id: Date.now(),
                     nome: nome,
                     precoPromocional: precoPromo,
@@ -356,31 +376,56 @@
                 });
             }
             
-            salvarProdutos();
+            salvarProdutosLocal();
             renderizarProdutos();
             atualizarListaAdmin();
             fecharModalProduto();
-            alert('✅ Produto salvo com sucesso!');
+            alert('✅ Produto salvo localmente! (Só você vê esta alteração)');
         }
         
         function excluirProduto(id) {
             if (confirm('Tem certeza que deseja excluir este produto?')) {
-                produtos = produtos.filter(p => p.id !== id);
-                salvarProdutos();
+                produtosLocal = produtosLocal.filter(p => p.id !== id);
+                const indexPublico = PRODUTOS_PUBLICOS.findIndex(p => p.id === id);
+                if (indexPublico !== -1) {
+                    PRODUTOS_PUBLICOS.splice(indexPublico, 1);
+                }
+                salvarProdutosLocal();
                 renderizarProdutos();
                 atualizarListaAdmin();
                 alert('🗑️ Produto excluído!');
             }
         }
         
-        // Evento para preview da imagem
+        function gerarCodigoAtualizado() {
+            const produtosFinais = produtosLocal.length > 0 ? produtosLocal : PRODUTOS_PUBLICOS;
+            const produtosJSON = JSON.stringify(produtosFinais, null, 12);
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;display:flex;align-items:center;justify-content:center';
+            modal.innerHTML = `
+                <div style="background:white;padding:2rem;border-radius:1rem;max-width:90%;max-height:90%;overflow:auto;width:700px;">
+                    <h3>📋 Código para atualizar o site</h3>
+                    <p style="margin:1rem 0; font-size:0.8rem;">Copie o JSON abaixo, vá no GitHub, edite o arquivo e substitua os produtos:</p>
+                    <textarea style="width:100%;height:300px;font-family:monospace;margin:1rem 0; font-size:0.7rem;" readonly>let PRODUTOS_PUBLICOS = ${produtosJSON};</textarea>
+                    <div style="display:flex; gap:1rem;">
+                        <button onclick="navigator.clipboard.writeText('let PRODUTOS_PUBLICOS = ${produtosJSON};')" style="background:#10b981; color:white; border:none; padding:0.5rem 1rem; border-radius:0.5rem; cursor:pointer;">📋 Copiar</button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" style="background:#64748b; color:white; border:none; padding:0.5rem 1rem; border-radius:0.5rem; cursor:pointer;">Fechar</button>
+                    </div>
+                    <p style="margin-top:1rem; font-size:0.7rem; color:#666;">📌 Após colar no GitHub, todos os clientes verão os novos produtos!</p>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+        
         document.getElementById('inputImagem').addEventListener('input', atualizarPreviewImagem);
         
         // Inicializar
-        carregarProdutosSalvos();
+        carregarProdutosLocal();
+        renderizarProdutos();
         
         console.log('✅ Site carregado! Clique 5 vezes no rodapé para liberar o admin.');
-        console.log('💡 Dica: Para adicionar imagem, cole a URL da imagem da Shopee e veja a prévia!');
+        console.log('💡 IMPORTANTE: As alterações são apenas para você. Use "Gerar Código" para atualizar para todos!');
     </script>
 </body>
 </html>
