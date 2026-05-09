@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Links Shopee - Revenda</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 2rem; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 3rem; }
+        .header h1 { font-size: 2.5rem; color: #ee4d2d; margin-bottom: 0.5rem; }
+        .header p { color: #666; font-size: 1.1rem; }
+        .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+        .product-card { background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .product-card:hover { transform: translateY(-5px); }
+        .card-img { width: 100%; height: 250px; object-fit: cover; background: #f0f0f0; }
+        .card-content { padding: 1.5rem; }
+        .product-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
+        .price { margin: 1rem 0; }
+        .current-price { font-size: 1.8rem; color: #ee4d2d; font-weight: bold; }
+        .old-price { font-size: 1rem; color: #999; text-decoration: line-through; margin-left: 0.5rem; }
+        .installment { color: #666; font-size: 0.9rem; margin: 0.5rem 0; }
+        .shopee-btn { background: #ee4d2d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 2rem; width: 100%; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; }
+        .shopee-btn:hover { background: #d63e1e; }
+        .loading { text-align: center; padding: 3rem; font-size: 1.2rem; color: #666; }
+        .footer { text-align: center; margin-top: 3rem; padding: 2rem; color: #666; }
+        @media (max-width: 768px) { body { padding: 1rem; } .products-grid { gap: 1rem; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛍️ Meus Links Shopee</h1>
+            <p>Produtos selecionados com desconto especial para revenda</p>
+        </div>
+        <div id="productsContainer" class="products-grid">
+            <div class="loading">📦 Carregando produtos...</div>
+        </div>
+        <div class="footer">
+            <p>🔗 Links oficiais da Shopee | Preços sujeitos a alteração</p>
+            <p>💎 Revenda autorizada</p>
+        </div>
+    </div>
+
+    <script>
+        // URL do seu arquivo JSON (você vai criar no GitHub)
+        // DEPOIS DE CRIAR O GIST, COLE O LINK AQUI:
+        const PRODUTOS_URL = 'https://raw.githubusercontent.com/SEU-USUARIO/SEU-REPOSITORIO/main/produtos.json';
+        
+        async function carregarProdutos() {
+            try {
+                const response = await fetch(PRODUTOS_URL + '?v=' + Date.now()); // Evita cache
+                const produtos = await response.json();
+                
+                const container = document.getElementById('productsContainer');
+                
+                if (!produtos || produtos.length === 0) {
+                    container.innerHTML = '<div class="loading">⚠️ Nenhum produto disponível no momento.</div>';
+                    return;
+                }
+                
+                container.innerHTML = produtos.map(prod => `
+                    <div class="product-card">
+                        <img class="card-img" src="${prod.imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto'}" 
+                             onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Imagem+Indisponível'" 
+                             alt="${prod.nome}">
+                        <div class="card-content">
+                            <h3 class="product-title">${prod.nome}</h3>
+                            <div class="price">
+                                <span class="current-price">R$ ${prod.precoPromocional.toFixed(2)}</span>
+                                <span class="old-price">R$ ${prod.precoOriginal.toFixed(2)}</span>
+                            </div>
+                            <div class="installment">${prod.parcelamento || 'Em até 3x sem juros'}</div>
+                            <button class="shopee-btn" onclick="window.open('${prod.linkShopee}', '_blank')">
+                                🛒 Comprar na Shopee
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                document.getElementById('productsContainer').innerHTML = '<div class="loading">❌ Erro ao carregar produtos. Tente novamente mais tarde.</div>';
+                console.error('Erro:', error);
+            }
+        }
+        
+        carregarProdutos();
+    </script>
+</body>
+</html>

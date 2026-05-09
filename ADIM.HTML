@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Gerenciar Produtos Shopee</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { background: #1e293b; padding: 2rem; }
+        .container { max-width: 800px; margin: 0 auto; background: white; border-radius: 1rem; padding: 2rem; }
+        h1 { color: #ee4d2d; margin-bottom: 1rem; }
+        .login-box { text-align: center; padding: 3rem; }
+        input, textarea { width: 100%; padding: 0.8rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 0.5rem; }
+        button { background: #ee4d2d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; }
+        .produto-item { border: 1px solid #ddd; padding: 1rem; margin: 1rem 0; border-radius: 0.5rem; }
+        .btn-editar { background: #3b82f6; margin-right: 0.5rem; }
+        .btn-excluir { background: #ef4444; }
+        .btn-salvar { background: #10b981; margin-top: 1rem; }
+        .admin-panel { display: none; }
+        textarea { font-family: monospace; height: 200px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginArea" class="login-box">
+            <h1>🔐 Painel Administrativo</h1>
+            <input type="password" id="senhaInput" placeholder="Digite a senha">
+            <button onclick="fazerLogin()">Entrar</button>
+            <p style="margin-top: 1rem; color: #666; font-size: 0.8rem;">Senha padrão: <strong>admin123</strong></p>
+        </div>
+
+        <div id="adminArea" class="admin-panel">
+            <h1>📦 Gerenciar Produtos</h1>
+            <p style="color: #666; margin-bottom: 1rem;">Edite o JSON abaixo e clique em "Salvar". Os produtos serão atualizados automaticamente no site público.</p>
+            
+            <textarea id="jsonEditor" placeholder="Cole aqui o JSON dos produtos"></textarea>
+            
+            <button class="btn-salvar" onclick="salvarProdutos()">💾 Salvar Produtos</button>
+            
+            <div style="margin: 2rem 0;">
+                <h3>📋 Instruções:</h3>
+                <ol style="margin-left: 1.5rem; color: #666;">
+                    <li>Edite o JSON acima (mantenha o formato)</li>
+                    <li>Clique em "Salvar Produtos"</li>
+                    <li>Copie o JSON gerado</li>
+                    <li>Vá até <strong>https://github.com</strong> e edite o arquivo <strong>produtos.json</strong></li>
+                    <li>Cole o novo JSON e salve</li>
+                    <li>Seu site público será atualizado automaticamente!</li>
+                </ol>
+            </div>
+            
+            <div style="margin-top: 2rem; padding: 1rem; background: #f0f9ff; border-radius: 0.5rem;">
+                <h3>🔗 Links importantes:</h3>
+                <p>📱 Site público: <strong id="siteUrl">https://seu-usuario.netlify.app</strong></p>
+                <p>📝 Repositório GitHub: <strong id="repoUrl">https://github.com/SEU-USUARIO/SEU-REPO</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SENHA_CORRETA = 'admin123'; // Mude para sua senha
+        
+        // JSON exemplo
+        const PRODUTOS_EXEMPLO = [
+            {
+                "id": 1,
+                "nome": "Fone Bluetooth 5.3 - 40h de bateria",
+                "precoPromocional": 79.90,
+                "precoOriginal": 149.90,
+                "imagem": "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
+                "linkShopee": "https://shopee.com.br/produto/123",
+                "parcelamento": "4x de R$19,98 sem juros"
+            },
+            {
+                "id": 2,
+                "nome": "Smartwatch Esportivo + Monitor Cardíaco",
+                "precoPromocional": 129.90,
+                "precoOriginal": 299.90,
+                "imagem": "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
+                "linkShopee": "https://shopee.com.br/produto/456",
+                "parcelamento": "6x de R$21,65"
+            }
+        ];
+        
+        function fazerLogin() {
+            const senha = document.getElementById('senhaInput').value;
+            if (senha === SENHA_CORRETA) {
+                document.getElementById('loginArea').style.display = 'none';
+                document.getElementById('adminArea').style.display = 'block';
+                
+                // Tentar carregar produtos atuais
+                carregarProdutosAtuais();
+            } else {
+                alert('❌ Senha incorreta!');
+            }
+        }
+        
+        async function carregarProdutosAtuais() {
+            try {
+                // Tentar buscar os produtos do GitHub
+                const response = await fetch('https://raw.githubusercontent.com/SEU-USUARIO/SEU-REPOSITORIO/main/produtos.json');
+                if (response.ok) {
+                    const produtos = await response.json();
+                    document.getElementById('jsonEditor').value = JSON.stringify(produtos, null, 2);
+                } else {
+                    document.getElementById('jsonEditor').value = JSON.stringify(PRODUTOS_EXEMPLO, null, 2);
+                }
+            } catch (error) {
+                document.getElementById('jsonEditor').value = JSON.stringify(PRODUTOS_EXEMPLO, null, 2);
+            }
+        }
+        
+        function salvarProdutos() {
+            try {
+                const jsonText = document.getElementById('jsonEditor').value;
+                const produtos = JSON.parse(jsonText);
+                
+                // Validar estrutura
+                if (!Array.isArray(produtos)) throw new Error('JSON deve ser um array');
+                
+                // Gerar código para copiar
+                const jsonFormatado = JSON.stringify(produtos, null, 2);
+                
+                // Criar modal de cópia
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;display:flex;align-items:center;justify-content:center';
+                modal.innerHTML = `
+                    <div style="background:white;padding:2rem;border-radius:1rem;max-width:90%;max-height:90%;overflow:auto;">
+                        <h3>✅ JSON Validado!</h3>
+                        <p style="margin:1rem 0;">Copie o código abaixo e cole no arquivo <strong>produtos.json</strong> do GitHub:</p>
+                        <textarea style="width:100%;height:300px;font-family:monospace;margin:1rem 0;" readonly>${jsonFormatado}</textarea>
+                        <button onclick="navigator.clipboard.writeText(${JSON.stringify(jsonFormatado)})" style="background:#3b82f6;margin-right:0.5rem;">📋 Copiar</button>
+                        <button onclick="this.parentElement.parentElement.remove()" style="background:#64748b;">Fechar</button>
+                        <p style="margin-top:1rem;font-size:0.8rem;color:#666;">📌 Depois de colar no GitHub, seu site será atualizado em ~2 minutos</p>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                alert('❌ JSON inválido! Verifique o formato. Erro: ' + error.message);
+            }
+        }
+        
+        // Mostrar URLs
+        document.getElementById('siteUrl').innerText = window.location.origin;
+        document.getElementById('repoUrl').innerText = 'https://github.com/SEU-USUARIO/SEU-REPO';
+    </script>
+</body>
+</html>

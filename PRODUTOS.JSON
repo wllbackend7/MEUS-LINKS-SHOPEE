@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "nome": "Fone Bluetooth 5.3 - 40h de bateria",
+        "precoPromocional": 79.90,
+        "precoOriginal": 149.90,
+        "imagem": "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
+        "linkShopee": "https://shopee.com.br/produto/123",
+        "parcelamento": "4x de R$19,98 sem juros"
+    },
+    {
+        "id": 2,
+        "nome": "Smartwatch Esportivo + Monitor Cardíaco",
+        "precoPromocional": 129.90,
+        "precoOriginal": 299.90,
+        "imagem": "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
+        "linkShopee": "https://shopee.com.br/produto/456",
+        "parcelamento": "6x de R$21,65"
+    }
+]
