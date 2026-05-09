@@ -5,373 +5,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meus Links Shopee - Revenda</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 2rem; }
         .container { max-width: 1200px; margin: 0 auto; }
         .header { text-align: center; margin-bottom: 3rem; }
         .header h1 { font-size: 2.5rem; color: #ee4d2d; margin-bottom: 0.5rem; }
-        .header p { color: #666; font-size: 1.1rem; }
         .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
         .product-card { background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s; }
         .product-card:hover { transform: translateY(-5px); }
-        .card-img { width: 100%; height: 250px; object-fit: cover; background: #f0f0f0; }
+        .card-img { width: 100%; height: 250px; object-fit: cover; }
         .card-content { padding: 1.5rem; }
-        .product-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; color: #333; }
-        .price { margin: 1rem 0; }
         .current-price { font-size: 1.8rem; color: #ee4d2d; font-weight: bold; }
-        .old-price { font-size: 1rem; color: #999; text-decoration: line-through; margin-left: 0.5rem; }
-        .installment { color: #666; font-size: 0.9rem; margin: 0.5rem 0; }
-        .shopee-btn { background: #ee4d2d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 2rem; width: 100%; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; }
-        .shopee-btn:hover { background: #d63e1e; }
-        .footer { text-align: center; margin-top: 3rem; padding: 2rem; color: #666; }
-        .admin-float { position: fixed; bottom: 20px; right: 20px; background: #ee4d2d; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; font-size: 1.5rem; }
-        .admin-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 200; width: 90%; max-width: 700px; max-height: 85vh; overflow-y: auto; }
+        .old-price { text-decoration: line-through; color: #999; margin-left: 0.5rem; }
+        .shopee-btn { background: #ee4d2d; color: white; border: none; padding: 0.8rem; border-radius: 2rem; width: 100%; font-weight: bold; cursor: pointer; }
+        .footer { text-align: center; margin-top: 3rem; padding: 2rem; color: #666; cursor: pointer; }
+        
+        /* Admin - escondido por padrão */
+        .admin-float { position: fixed; bottom: 20px; right: 20px; background: #ee4d2d; color: white; width: 50px; height: 50px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; z-index: 100; font-size: 1.5rem; }
+        .admin-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 1rem; z-index: 200; width: 90%; max-width: 500px; }
         .admin-panel.active { display: block; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; }
         .overlay.active { display: block; }
-        input, textarea, select { width: 100%; padding: 0.7rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 0.5rem; font-size: 0.9rem; }
-        label { font-weight: 600; color: #333; margin-top: 0.5rem; display: block; }
-        .btn-salvar { background: #10b981; color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 0.5rem; cursor: pointer; margin-right: 0.5rem; font-weight: bold; }
-        .btn-cancelar { background: #64748b; color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 0.5rem; cursor: pointer; }
-        .produto-item { border: 1px solid #ddd; padding: 0.8rem; margin: 0.8rem 0; border-radius: 0.5rem; background: #f9f9f9; display: flex; gap: 1rem; align-items: center; }
-        .produto-imagem-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 0.5rem; background: #e2e8f0; }
-        .produto-info { flex: 1; }
-        .produto-info strong { display: block; margin-bottom: 0.3rem; }
-        .produto-info small { color: #666; }
-        .btn-editar { background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.3rem; cursor: pointer; margin-right: 0.3rem; }
-        .btn-excluir { background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.3rem; cursor: pointer; }
-        .image-preview { width: 100px; height: 100px; object-fit: cover; border-radius: 0.5rem; margin: 0.5rem 0; border: 2px solid #ee4d2d; }
-        .dica-imagem { font-size: 0.7rem; color: #666; margin-top: -0.3rem; margin-bottom: 0.5rem; }
-        .guia-cores { background: #f0fdf4; padding: 1rem; border-radius: 0.5rem; margin: 1rem 0; font-size: 0.8rem; }
-        @media (max-width: 768px) { body { padding: 1rem; } .products-grid { gap: 1rem; } .produto-item { flex-direction: column; text-align: center; } }
+        input { width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 0.5rem; }
+        button { cursor: pointer; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>🛍️ Meus Links Shopee</h1>
-            <p>Produtos selecionados com desconto especial para revenda</p>
+            <p>Produtos selecionados para revenda</p>
         </div>
-        <div id="productsContainer" class="products-grid">
-            <div class="loading" style="text-align:center;padding:3rem;">📦 Carregando produtos...</div>
-        </div>
+        <div id="productsContainer" class="products-grid">📦 Carregando...</div>
         <div class="footer">
-            <p>🔗 Links oficiais da Shopee | Preços sujeitos a alteração</p>
-            <p>💎 Revenda autorizada</p>
+            <p>🔗 Links oficiais da Shopee | Revenda autorizada</p>
         </div>
     </div>
 
-    <!-- Botão flutuante do admin -->
-    <div class="admin-float" onclick="abrirAdmin()">🔧</div>
-
-    <!-- Overlay -->
-    <div id="overlay" class="overlay" onclick="fecharAdmin()"></div>
-
-    <!-- Painel Admin -->
+    <!-- Botão admin (escondido dos clientes) -->
+    <div id="adminBtn" class="admin-float" onclick="abrirAdmin()">🔧</div>
+    <div id="overlay" class="overlay"></div>
+    
     <div id="adminPanel" class="admin-panel">
-        <h2 style="color:#ee4d2d;">🔐 Painel do Revendedor</h2>
-        <div id="loginSection">
-            <input type="password" id="senhaAdmin" placeholder="Digite a senha">
-            <button onclick="fazerLogin()" style="background:#ee4d2d; color:white; border:none; padding:0.7rem 1rem; border-radius:0.5rem; margin-top:0.5rem; width:100%; font-weight:bold;">Entrar</button>
-            <p style="margin-top:1rem; font-size:0.8rem; color:#666;">Senha padrão: <strong>admin123</strong></p>
+        <h3 style="color:#ee4d2d;">🔐 Admin</h3>
+        <div id="loginDiv">
+            <input type="password" id="senha" placeholder="Senha">
+            <button onclick="login()" style="background:#ee4d2d; color:white; border:none; padding:0.5rem; width:100%;">Entrar</button>
+            <p style="font-size:0.7rem; margin-top:0.5rem;">Senha: admin123</p>
         </div>
-        <div id="gerenciarSection" style="display:none;">
-            <h3>📦 Seus Produtos</h3>
-            <button onclick="abrirFormularioProduto()" style="background:#10b981; color:white; border:none; padding:0.7rem 1rem; border-radius:0.5rem; margin:1rem 0; width:100%; font-weight:bold; cursor:pointer;">➕ Adicionar Novo Produto</button>
-            <div id="listaProdutosAdmin"></div>
-            <button onclick="fecharAdmin()" class="btn-cancelar" style="margin-top:1rem; width:100%;">Fechar</button>
-        </div>
-    </div>
-
-    <!-- Modal para adicionar/editar produto com imagem -->
-    <div id="produtoModal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:2rem; border-radius:1rem; z-index:300; width:90%; max-width:500px; max-height:85vh; overflow-y:auto; box-shadow:0 20px 40px rgba(0,0,0,0.3);">
-        <h3 id="modalTitulo" style="color:#ee4d2d; margin-bottom:1rem;">Adicionar Produto</h3>
-        
-        <label>📷 IMAGEM DO PRODUTO (COLE A URL):</label>
-        <input type="text" id="inputImagem" placeholder="https://exemplo.com/imagem.jpg">
-        <div class="dica-imagem">💡 Como conseguir a URL da imagem: Na Shopee, clique com botão direito na foto do produto → "Abrir imagem em nova aba" → copie o link da barra de endereço</div>
-        <div id="previewImagem" style="text-align:center;"></div>
-        
-        <label>🏷️ NOME DO PRODUTO:</label>
-        <input type="text" id="inputNome" placeholder="Ex: Fone Bluetooth XYZ">
-        
-        <label>💰 PREÇO PROMOCIONAL (R$):</label>
-        <input type="number" id="inputPrecoPromo" step="0.01" placeholder="79.90">
-        
-        <label>💸 PREÇO ORIGINAL (R$):</label>
-        <input type="number" id="inputPrecoOrig" step="0.01" placeholder="149.90">
-        
-        <label>🔗 LINK DA SHOPEE (copie do produto):</label>
-        <input type="text" id="inputLink" placeholder="https://shopee.com.br/produto/...">
-        
-        <label>📅 PARCELAMENTO (opcional):</label>
-        <input type="text" id="inputParcelamento" placeholder="Ex: 4x de R$19,98">
-        
-        <div class="guia-cores">
-            <strong>🎨 Quer usar uma imagem grátis?</strong><br>
-            👉 <a href="https://via.placeholder.com/300x250/ee4d2d/white?text=Produto" target="_blank">Imagem laranja padrão</a><br>
-            👉 Use imagens do Google Images (direito de uso permitido)<br>
-            👉 Ou pegue fotos reais da Shopee!
-        </div>
-        
-        <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-            <button onclick="salvarProdutoForm()" class="btn-salvar" style="flex:1;">💾 Salvar Produto</button>
-            <button onclick="fecharModalProduto()" class="btn-cancelar" style="flex:1;">Cancelar</button>
+        <div id="adminDiv" style="display:none;">
+            <div id="listaProdutos"></div>
+            <button onclick="novoProduto()" style="background:#10b981; color:white; border:none; padding:0.5rem; width:100%; margin:0.5rem 0;">➕ Adicionar</button>
+            <button onclick="fecharAdmin()" style="background:#64748b; color:white; border:none; padding:0.5rem; width:100%;">Fechar</button>
         </div>
     </div>
 
     <script>
-        // ========== PRODUTOS (VOCÊ PODE EDITAR DIRETO AQUI TAMBÉM) ==========
         let produtos = [
-            {
-                id: 1,
-                nome: "Fone Bluetooth 5.3 - 40h de bateria",
-                precoPromocional: 79.90,
-                precoOriginal: 149.90,
-                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
-                linkShopee: "https://shopee.com.br/produto/123",
-                parcelamento: "4x de R$19,98 sem juros"
-            },
-            {
-                id: 2,
-                nome: "Smartwatch Esportivo + Monitor Cardíaco",
-                precoPromocional: 129.90,
-                precoOriginal: 299.90,
-                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
-                linkShopee: "https://shopee.com.br/produto/456",
-                parcelamento: "6x de R$21,65"
-            }
+            { id: 1, nome: "Fone Bluetooth", precoPromocional: 79.90, precoOriginal: 149.90, imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone", linkShopee: "#", parcelamento: "4x de R$19,98" },
+            { id: 2, nome: "Smartwatch", precoPromocional: 129.90, precoOriginal: 299.90, imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Watch", linkShopee: "#", parcelamento: "6x de R$21,65" }
         ];
         
-        let adminLogado = false;
-        let editandoId = null;
+        let logado = false;
         
-        // Salvar produtos no localStorage
-        function salvarProdutos() {
-            localStorage.setItem('shopee_produtos', JSON.stringify(produtos));
-        }
+        function salvar() { localStorage.setItem('produtos', JSON.stringify(produtos)); renderizar(); }
+        function carregar() { const p = localStorage.getItem('produtos'); if(p) produtos = JSON.parse(p); renderizar(); }
         
-        function carregarProdutosSalvos() {
-            const salvos = localStorage.getItem('shopee_produtos');
-            if (salvos) {
-                produtos = JSON.parse(salvos);
-            }
-        }
-        
-        // Preview da imagem em tempo real
-        function atualizarPreviewImagem() {
-            const url = document.getElementById('inputImagem').value;
-            const previewDiv = document.getElementById('previewImagem');
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
-                previewDiv.innerHTML = `<img src="${url}" class="image-preview" onerror="this.style.display='none'; this.nextSibling.style.display='block'"><div style="display:none; color:red; font-size:0.7rem;">⚠️ Imagem não carregou. Verifique a URL.</div>`;
-            } else {
-                previewDiv.innerHTML = '<div style="color:#999; font-size:0.8rem;">Pré-visualização aparecerá aqui</div>';
-            }
-        }
-        
-        // Renderizar produtos na tela pública
-        function renderizarProdutos() {
+        function renderizar() {
             const container = document.getElementById('productsContainer');
-            
-            if (!produtos || produtos.length === 0) {
-                container.innerHTML = '<div style="text-align:center;padding:3rem;">⚠️ Nenhum produto disponível no momento.</div>';
-                return;
-            }
-            
-            container.innerHTML = produtos.map(prod => `
+            if(!produtos.length) { container.innerHTML = '<div style="text-align:center;padding:3rem;">Nenhum produto</div>'; return; }
+            container.innerHTML = produtos.map(p => `
                 <div class="product-card">
-                    <img class="card-img" src="${prod.imagem}" onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Imagem+Indisponível'" alt="${prod.nome}">
+                    <img class="card-img" src="${p.imagem}" onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Produto'">
                     <div class="card-content">
-                        <h3 class="product-title">${escapeHtml(prod.nome)}</h3>
-                        <div class="price">
-                            <span class="current-price">R$ ${prod.precoPromocional.toFixed(2)}</span>
-                            <span class="old-price">R$ ${prod.precoOriginal.toFixed(2)}</span>
-                        </div>
-                        <div class="installment">${prod.parcelamento || 'Em até 3x sem juros'}</div>
-                        <button class="shopee-btn" onclick="window.open('${prod.linkShopee}', '_blank')">
-                            🛒 Comprar na Shopee
-                        </button>
+                        <h3>${p.nome}</h3>
+                        <span class="current-price">R$ ${p.precoPromocional.toFixed(2)}</span>
+                        <span class="old-price">R$ ${p.precoOriginal.toFixed(2)}</span>
+                        <div style="margin:10px 0;">${p.parcelamento}</div>
+                        <button class="shopee-btn" onclick="window.open('${p.linkShopee}','_blank')">Comprar</button>
                     </div>
                 </div>
             `).join('');
         }
         
-        function escapeHtml(texto) {
-            return texto.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-        
-        // Funções do Admin
-        function abrirAdmin() {
-            document.getElementById('overlay').classList.add('active');
-            document.getElementById('adminPanel').classList.add('active');
-            if (!adminLogado) {
-                document.getElementById('loginSection').style.display = 'block';
-                document.getElementById('gerenciarSection').style.display = 'none';
-            } else {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('gerenciarSection').style.display = 'block';
-                atualizarListaAdmin();
+        // Admin (aparece SÓ PARA VOCÊ)
+        let cliqueRodape = 0;
+        document.querySelector('.footer').addEventListener('click', () => {
+            cliqueRodape++;
+            if(cliqueRodape === 5) {
+                document.getElementById('adminBtn').style.display = 'flex';
+                alert('🔧 Modo admin liberado! Clique no botão laranja.');
+                cliqueRodape = 0;
             }
+            setTimeout(() => cliqueRodape = 0, 3000);
+        });
+        
+        function abrirAdmin() { document.getElementById('overlay').classList.add('active'); document.getElementById('adminPanel').classList.add('active'); }
+        function fecharAdmin() { document.getElementById('overlay').classList.remove('active'); document.getElementById('adminPanel').classList.remove('active'); }
+        
+        function login() {
+            if(document.getElementById('senha').value === 'admin123') {
+                logado = true;
+                document.getElementById('loginDiv').style.display = 'none';
+                document.getElementById('adminDiv').style.display = 'block';
+                atualizarLista();
+            } else alert('Senha errada');
         }
         
-        function fecharAdmin() {
-            document.getElementById('overlay').classList.remove('active');
-            document.getElementById('adminPanel').classList.remove('active');
-            fecharModalProduto();
-        }
-        
-        function fazerLogin() {
-            const senha = document.getElementById('senhaAdmin').value;
-            if (senha === 'admin123') {
-                adminLogado = true;
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('gerenciarSection').style.display = 'block';
-                atualizarListaAdmin();
-                alert('✅ Login realizado! Agora você pode gerenciar seus produtos.');
-                fecharAdmin();
-                setTimeout(() => abrirAdmin(), 100);
-            } else {
-                alert('❌ Senha incorreta!');
-            }
-        }
-        
-        function atualizarListaAdmin() {
-            const lista = document.getElementById('listaProdutosAdmin');
-            if (!lista) return;
-            
-            if (produtos.length === 0) {
-                lista.innerHTML = '<p style="text-align:center; padding:1rem; color:#666;">Nenhum produto cadastrado. Clique em "Adicionar Produto" para começar!</p>';
-                return;
-            }
-            
-            lista.innerHTML = produtos.map(prod => `
-                <div class="produto-item">
-                    <img class="produto-imagem-preview" src="${prod.imagem}" onerror="this.src='https://via.placeholder.com/60x60/ee4d2d/white?text=Erro'" alt="">
-                    <div class="produto-info">
-                        <strong>${escapeHtml(prod.nome)}</strong>
-                        <small>R$ ${prod.precoPromocional.toFixed(2)} | Shopee: ${prod.linkShopee.substring(0, 40)}...</small>
-                    </div>
-                    <div>
-                        <button class="btn-editar" onclick="abrirFormularioProduto(${prod.id})">✏️ Editar</button>
-                        <button class="btn-excluir" onclick="excluirProduto(${prod.id})">🗑️ Excluir</button>
+        function atualizarLista() {
+            const lista = document.getElementById('listaProdutos');
+            lista.innerHTML = produtos.map(p => `
+                <div style="border:1px solid #ddd; margin:0.5rem 0; padding:0.5rem; border-radius:0.5rem;">
+                    <strong>${p.nome}</strong> - R$ ${p.precoPromocional}
+                    <div style="margin-top:0.5rem;">
+                        <button onclick="editar(${p.id})" style="background:#3b82f6; color:white; border:none; padding:0.2rem 0.5rem;">✏️</button>
+                        <button onclick="excluir(${p.id})" style="background:#ef4444; color:white; border:none; padding:0.2rem 0.5rem;">🗑️</button>
                     </div>
                 </div>
             `).join('');
         }
         
-        function abrirFormularioProduto(id = null) {
-            editandoId = id;
-            const modal = document.getElementById('produtoModal');
-            const titulo = document.getElementById('modalTitulo');
-            
-            if (id) {
-                // Editar produto existente
-                const prod = produtos.find(p => p.id === id);
-                if (prod) {
-                    titulo.innerText = '✏️ Editar Produto';
-                    document.getElementById('inputNome').value = prod.nome;
-                    document.getElementById('inputPrecoPromo').value = prod.precoPromocional;
-                    document.getElementById('inputPrecoOrig').value = prod.precoOriginal;
-                    document.getElementById('inputLink').value = prod.linkShopee;
-                    document.getElementById('inputImagem').value = prod.imagem || '';
-                    document.getElementById('inputParcelamento').value = prod.parcelamento || '';
-                    atualizarPreviewImagem();
-                }
-            } else {
-                // Novo produto
-                titulo.innerText = '➕ Adicionar Produto';
-                document.getElementById('inputNome').value = '';
-                document.getElementById('inputPrecoPromo').value = '';
-                document.getElementById('inputPrecoOrig').value = '';
-                document.getElementById('inputLink').value = '';
-                document.getElementById('inputImagem').value = '';
-                document.getElementById('inputParcelamento').value = '';
-                document.getElementById('previewImagem').innerHTML = '<div style="color:#999; font-size:0.8rem;">Pré-visualização aparecerá aqui</div>';
-            }
-            
-            modal.style.display = 'block';
-            document.getElementById('overlay').style.display = 'block';
-        }
-        
-        function fecharModalProduto() {
-            document.getElementById('produtoModal').style.display = 'none';
-            document.getElementById('overlay').style.display = 'block';
-            editandoId = null;
-        }
-        
-        function salvarProdutoForm() {
-            const nome = document.getElementById('inputNome').value.trim();
-            const precoPromo = parseFloat(document.getElementById('inputPrecoPromo').value);
-            const precoOrig = parseFloat(document.getElementById('inputPrecoOrig').value);
-            const link = document.getElementById('inputLink').value.trim();
-            const imagem = document.getElementById('inputImagem').value.trim();
-            const parcelamento = document.getElementById('inputParcelamento').value.trim();
-            
-            if (!nome || isNaN(precoPromo) || isNaN(precoOrig) || !link) {
-                alert('❌ Preencha: Nome, Preços e Link da Shopee!');
-                return;
-            }
-            
-            const imagemFinal = imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto';
-            
-            if (editandoId) {
-                // Editar
-                const index = produtos.findIndex(p => p.id === editandoId);
-                if (index !== -1) {
-                    produtos[index] = {
-                        ...produtos[index],
-                        nome: nome,
-                        precoPromocional: precoPromo,
-                        precoOriginal: precoOrig,
-                        linkShopee: link,
-                        imagem: imagemFinal,
-                        parcelamento: parcelamento || produtos[index].parcelamento
-                    };
-                }
-            } else {
-                // Adicionar novo
-                produtos.push({
-                    id: Date.now(),
-                    nome: nome,
-                    precoPromocional: precoPromo,
-                    precoOriginal: precoOrig,
-                    linkShopee: link,
-                    imagem: imagemFinal,
-                    parcelamento: parcelamento || 'Até 3x sem juros'
-                });
-            }
-            
-            salvarProdutos();
-            renderizarProdutos();
-            atualizarListaAdmin();
-            fecharModalProduto();
-            alert('✅ Produto salvo com sucesso!');
-        }
-        
-        function excluirProduto(id) {
-            if (confirm('Tem certeza que deseja excluir este produto?')) {
-                produtos = produtos.filter(p => p.id !== id);
-                salvarProdutos();
-                renderizarProdutos();
-                atualizarListaAdmin();
-                alert('🗑️ Produto excluído!');
+        function novoProduto() {
+            const nome = prompt('Nome:');
+            const precoPromo = parseFloat(prompt('Preço promocional:'));
+            const precoOrig = parseFloat(prompt('Preço original:'));
+            const link = prompt('Link Shopee:');
+            const imagem = prompt('URL da imagem (ou Enter para padrão):') || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto';
+            if(nome && precoPromo && precoOrig && link) {
+                produtos.push({ id: Date.now(), nome, precoPromocional: precoPromo, precoOriginal: precoOrig, imagem, linkShopee: link, parcelamento: 'Até 3x' });
+                salvar();
+                atualizarLista();
             }
         }
         
-        // Evento para preview da imagem
-        document.getElementById('inputImagem').addEventListener('input', atualizarPreviewImagem);
+        function editar(id) {
+            const p = produtos.find(x => x.id === id);
+            if(!p) return;
+            const nome = prompt('Novo nome:', p.nome);
+            if(nome) p.nome = nome;
+            const preco = parseFloat(prompt('Novo preço promo:', p.precoPromocional));
+            if(preco) p.precoPromocional = preco;
+            const link = prompt('Novo link:', p.linkShopee);
+            if(link) p.linkShopee = link;
+            salvar();
+            atualizarLista();
+        }
         
-        // Inicializar
-        carregarProdutosSalvos();
-        renderizarProdutos();
+        function excluir(id) { if(confirm('Excluir?')) { produtos = produtos.filter(x => x.id !== id); salvar(); atualizarLista(); } }
         
-        console.log('🎉 Site pronto! Para adicionar imagens, clique no botão 🔧 e depois em "Adicionar Produto"');
-        console.log('💡 Dica: Cole a URL da imagem e veja a pré-visualização antes de salvar!');
+        carregar();
     </script>
 </body>
 </html>
