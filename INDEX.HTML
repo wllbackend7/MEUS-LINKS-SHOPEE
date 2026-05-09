@@ -23,8 +23,18 @@
         .installment { color: #666; font-size: 0.9rem; margin: 0.5rem 0; }
         .shopee-btn { background: #ee4d2d; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 2rem; width: 100%; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.3s; }
         .shopee-btn:hover { background: #d63e1e; }
-        .loading { text-align: center; padding: 3rem; font-size: 1.2rem; color: #666; }
         .footer { text-align: center; margin-top: 3rem; padding: 2rem; color: #666; }
+        .admin-float { position: fixed; bottom: 20px; right: 20px; background: #ee4d2d; color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 100; }
+        .admin-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); z-index: 200; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        .admin-panel.active { display: block; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 150; }
+        .overlay.active { display: block; }
+        input, textarea { width: 100%; padding: 0.5rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 0.5rem; }
+        .btn-salvar { background: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; margin-right: 0.5rem; }
+        .btn-cancelar { background: #64748b; color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; }
+        .produto-item { border: 1px solid #ddd; padding: 0.5rem; margin: 0.5rem 0; border-radius: 0.5rem; }
+        .btn-editar { background: #3b82f6; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 0.3rem; cursor: pointer; margin-right: 0.3rem; }
+        .btn-excluir { background: #ef4444; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 0.3rem; cursor: pointer; }
         @media (max-width: 768px) { body { padding: 1rem; } .products-grid { gap: 1rem; } }
     </style>
 </head>
@@ -35,7 +45,7 @@
             <p>Produtos selecionados com desconto especial para revenda</p>
         </div>
         <div id="productsContainer" class="products-grid">
-            <div class="loading">📦 Carregando produtos...</div>
+            <div class="loading" style="text-align:center;padding:3rem;">📦 Carregando produtos...</div>
         </div>
         <div class="footer">
             <p>🔗 Links oficiais da Shopee | Preços sujeitos a alteração</p>
@@ -43,48 +53,216 @@
         </div>
     </div>
 
+    <!-- Botão flutuante do admin -->
+    <div class="admin-float" onclick="abrirAdmin()">🔧</div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="fecharAdmin()"></div>
+
+    <!-- Painel Admin -->
+    <div id="adminPanel" class="admin-panel">
+        <h2 style="color:#ee4d2d;">🔐 Painel do Revendedor</h2>
+        <div id="loginSection">
+            <input type="password" id="senhaAdmin" placeholder="Digite a senha">
+            <button onclick="fazerLogin()" style="background:#ee4d2d; color:white; border:none; padding:0.5rem 1rem; border-radius:0.5rem; margin-top:0.5rem;">Entrar</button>
+            <p style="margin-top:1rem; font-size:0.8rem; color:#666;">Senha padrão: <strong>admin123</strong></p>
+        </div>
+        <div id="gerenciarSection" style="display:none;">
+            <h3>📦 Seus Produtos</h3>
+            <button onclick="adicionarProduto()" style="background:#10b981; color:white; border:none; padding:0.5rem 1rem; border-radius:0.5rem; margin:1rem 0;">➕ Adicionar Produto</button>
+            <div id="listaProdutosAdmin"></div>
+            <button onclick="fecharAdmin()" class="btn-cancelar" style="margin-top:1rem;">Fechar</button>
+        </div>
+    </div>
+
     <script>
-        // URL do seu arquivo JSON (você vai criar no GitHub)
-        // DEPOIS DE CRIAR O GIST, COLE O LINK AQUI:
-        const PRODUTOS_URL = https://raw.githubusercontent.com/wllbackend7/MEUS-LINKS-SHOPEE/refs/heads/main/PRODUTOS.JSON
+        // ========== SEUS PRODUTOS FICAM AQUI! ==========
+        // EDITE ESTA LISTA DIRETAMENTE PARA ADICIONAR/EDITAR PRODUTOS
+        let produtos = [
+            {
+                id: 1,
+                nome: "Fone Bluetooth 5.3 - 40h de bateria",
+                precoPromocional: 79.90,
+                precoOriginal: 149.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
+                linkShopee: "https://shopee.com.br/produto/123",
+                parcelamento: "4x de R$19,98 sem juros"
+            },
+            {
+                id: 2,
+                nome: "Smartwatch Esportivo + Monitor Cardíaco",
+                precoPromocional: 129.90,
+                precoOriginal: 299.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
+                linkShopee: "https://shopee.com.br/produto/456",
+                parcelamento: "6x de R$21,65"
+            }
+        ];
         
-        async function carregarProdutos() {
-            try {
-                const response = await fetch(PRODUTOS_URL + '?v=' + Date.now()); // Evita cache
-                const produtos = await response.json();
-                
-                const container = document.getElementById('productsContainer');
-                
-                if (!produtos || produtos.length === 0) {
-                    container.innerHTML = '<div class="loading">⚠️ Nenhum produto disponível no momento.</div>';
-                    return;
-                }
-                
-                container.innerHTML = produtos.map(prod => `
-                    <div class="product-card">
-                        <img class="card-img" src="${prod.imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto'}" 
-                             onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Imagem+Indisponível'" 
-                             alt="${prod.nome}">
-                        <div class="card-content">
-                            <h3 class="product-title">${prod.nome}</h3>
-                            <div class="price">
-                                <span class="current-price">R$ ${prod.precoPromocional.toFixed(2)}</span>
-                                <span class="old-price">R$ ${prod.precoOriginal.toFixed(2)}</span>
-                            </div>
-                            <div class="installment">${prod.parcelamento || 'Em até 3x sem juros'}</div>
-                            <button class="shopee-btn" onclick="window.open('${prod.linkShopee}', '_blank')">
-                                🛒 Comprar na Shopee
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-            } catch (error) {
-                document.getElementById('productsContainer').innerHTML = '<div class="loading">❌ Erro ao carregar produtos. Tente novamente mais tarde.</div>';
-                console.error('Erro:', error);
+        let adminLogado = false;
+        
+        // Salvar produtos no localStorage (para não perder ao atualizar)
+        function salvarProdutos() {
+            localStorage.setItem('shopee_produtos', JSON.stringify(produtos));
+        }
+        
+        function carregarProdutosSalvos() {
+            const salvos = localStorage.getItem('shopee_produtos');
+            if (salvos) {
+                produtos = JSON.parse(salvos);
             }
         }
         
-        carregarProdutos();
+        // Renderizar produtos na tela pública
+        function renderizarProdutos() {
+            const container = document.getElementById('productsContainer');
+            
+            if (!produtos || produtos.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:3rem;">⚠️ Nenhum produto disponível no momento.</div>';
+                return;
+            }
+            
+            container.innerHTML = produtos.map(prod => `
+                <div class="product-card">
+                    <img class="card-img" src="${prod.imagem}" onerror="this.src='https://via.placeholder.com/300x250/ee4d2d/white?text=Produto'" alt="${prod.nome}">
+                    <div class="card-content">
+                        <h3 class="product-title">${prod.nome}</h3>
+                        <div class="price">
+                            <span class="current-price">R$ ${prod.precoPromocional.toFixed(2)}</span>
+                            <span class="old-price">R$ ${prod.precoOriginal.toFixed(2)}</span>
+                        </div>
+                        <div class="installment">${prod.parcelamento || 'Em até 3x sem juros'}</div>
+                        <button class="shopee-btn" onclick="window.open('${prod.linkShopee}', '_blank')">
+                            🛒 Comprar na Shopee
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Funções do Admin
+        function abrirAdmin() {
+            document.getElementById('overlay').classList.add('active');
+            document.getElementById('adminPanel').classList.add('active');
+            if (!adminLogado) {
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('gerenciarSection').style.display = 'none';
+            } else {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('gerenciarSection').style.display = 'block';
+                atualizarListaAdmin();
+            }
+        }
+        
+        function fecharAdmin() {
+            document.getElementById('overlay').classList.remove('active');
+            document.getElementById('adminPanel').classList.remove('active');
+        }
+        
+        function fazerLogin() {
+            const senha = document.getElementById('senhaAdmin').value;
+            if (senha === 'admin123') {
+                adminLogado = true;
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('gerenciarSection').style.display = 'block';
+                atualizarListaAdmin();
+                alert('✅ Login realizado! Agora você pode gerenciar seus produtos.');
+            } else {
+                alert('❌ Senha incorreta!');
+            }
+        }
+        
+        function atualizarListaAdmin() {
+            const lista = document.getElementById('listaProdutosAdmin');
+            if (!lista) return;
+            
+            lista.innerHTML = produtos.map(prod => `
+                <div class="produto-item">
+                    <strong>${prod.nome}</strong><br>
+                    <span style="color:#ee4d2d;">R$ ${prod.precoPromocional.toFixed(2)}</span>
+                    <span style="text-decoration:line-through; color:#999; margin-left:0.5rem;">R$ ${prod.precoOriginal.toFixed(2)}</span>
+                    <div style="margin-top:0.5rem;">
+                        <button class="btn-editar" onclick="editarProduto(${prod.id})">✏️ Editar</button>
+                        <button class="btn-excluir" onclick="excluirProduto(${prod.id})">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (produtos.length === 0) {
+                lista.innerHTML = '<p style="color:#666;">Nenhum produto cadastrado. Clique em "Adicionar Produto" para começar!</p>';
+            }
+        }
+        
+        function adicionarProduto() {
+            const nome = prompt('Nome do produto:');
+            if (!nome) return;
+            
+            const precoPromo = parseFloat(prompt('Preço promocional (R$):'));
+            if (isNaN(precoPromo)) return;
+            
+            const precoOrig = parseFloat(prompt('Preço original (R$):'));
+            if (isNaN(precoOrig)) return;
+            
+            const link = prompt('Link da Shopee (copie a URL do produto):');
+            if (!link) return;
+            
+            const imagem = prompt('URL da imagem (deixe em branco para usar padrão):', 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto');
+            
+            const novoProduto = {
+                id: Date.now(),
+                nome: nome,
+                precoPromocional: precoPromo,
+                precoOriginal: precoOrig,
+                imagem: imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto',
+                linkShopee: link,
+                parcelamento: 'Até 3x sem juros'
+            };
+            
+            produtos.push(novoProduto);
+            salvarProdutos();
+            renderizarProdutos();
+            atualizarListaAdmin();
+            alert('✅ Produto adicionado com sucesso!');
+        }
+        
+        function editarProduto(id) {
+            const prod = produtos.find(p => p.id === id);
+            if (!prod) return;
+            
+            const novoNome = prompt('Novo nome:', prod.nome);
+            if (novoNome) prod.nome = novoNome;
+            
+            const novoPrecoPromo = parseFloat(prompt('Novo preço promocional:', prod.precoPromocional));
+            if (!isNaN(novoPrecoPromo)) prod.precoPromocional = novoPrecoPromo;
+            
+            const novoPrecoOrig = parseFloat(prompt('Novo preço original:', prod.precoOriginal));
+            if (!isNaN(novoPrecoOrig)) prod.precoOriginal = novoPrecoOrig;
+            
+            const novoLink = prompt('Novo link da Shopee:', prod.linkShopee);
+            if (novoLink) prod.linkShopee = novoLink;
+            
+            const novaImagem = prompt('Nova URL da imagem:', prod.imagem);
+            if (novaImagem) prod.imagem = novaImagem;
+            
+            salvarProdutos();
+            renderizarProdutos();
+            atualizarListaAdmin();
+            alert('✅ Produto atualizado!');
+        }
+        
+        function excluirProduto(id) {
+            if (confirm('Tem certeza que deseja excluir este produto?')) {
+                produtos = produtos.filter(p => p.id !== id);
+                salvarProdutos();
+                renderizarProdutos();
+                atualizarListaAdmin();
+                alert('🗑️ Produto excluído!');
+            }
+        }
+        
+        // Inicializar
+        carregarProdutosSalvos();
+        renderizarProdutos();
     </script>
 </body>
 </html>
