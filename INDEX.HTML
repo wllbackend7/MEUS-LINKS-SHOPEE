@@ -42,9 +42,9 @@
         .produto-info strong { display: block; margin-bottom: 0.3rem; }
         .btn-editar { background: #3b82f6; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.3rem; cursor: pointer; margin-right: 0.3rem; }
         .btn-excluir { background: #ef4444; color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 0.3rem; cursor: pointer; }
+        .btn-exportar { background: #8b5cf6; color: white; border: none; padding: 0.7rem; border-radius: 0.5rem; width: 100%; margin: 0.5rem 0; font-weight: bold; cursor: pointer; }
+        .btn-importar { background: #f59e0b; color: white; border: none; padding: 0.7rem; border-radius: 0.5rem; width: 100%; margin: 0.5rem 0; font-weight: bold; cursor: pointer; }
         .dica-imagem { font-size: 0.7rem; color: #666; margin-top: -0.3rem; margin-bottom: 0.5rem; }
-        .loading { text-align: center; padding: 3rem; color: #666; }
-        .salvo-msg { background: #d1fae5; color: #065f46; padding: 0.5rem; border-radius: 0.5rem; text-align: center; margin: 0.5rem 0; display: none; }
         
         @media (max-width: 768px) { body { padding: 1rem; } .products-grid { gap: 1rem; } }
     </style>
@@ -56,7 +56,7 @@
             <p>Produtos selecionados com desconto especial</p>
         </div>
         <div id="productsContainer" class="products-grid">
-            <div class="loading">📦 Carregando produtos...</div>
+            <div style="text-align:center;padding:3rem;">📦 Carregando produtos...</div>
         </div>
         <div class="footer">
             <p>🔗 Links oficiais da Shopee | Preços sujeitos a alteração</p>
@@ -80,12 +80,14 @@
         
         <div id="adminDiv" style="display:none;">
             <h3>📦 Gerenciar Produtos</h3>
-            <div id="salvoMsg" class="salvo-msg">✅ Produto salvo com sucesso para todos!</div>
             
             <button onclick="abrirFormularioProduto()" style="background:#10b981; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin:1rem 0; font-weight:bold; cursor:pointer;">➕ Adicionar Produto</button>
             
             <div id="listaProdutosAdmin"></div>
             
+            <button onclick="exportarProdutos()" class="btn-exportar">📤 Exportar Produtos (salvar backup)</button>
+            <button onclick="importarProdutos()" class="btn-importar">📥 Importar Produtos (restaurar backup)</button>
+            <button onclick="gerarLinkCompartilhar()" class="btn-exportar" style="background:#3b82f6;">🔗 Gerar Link para Compartilhar</button>
             <button onclick="fecharAdmin()" style="background:#64748b; color:white; border:none; padding:0.7rem; border-radius:0.5rem; width:100%; margin-top:0.5rem; cursor:pointer;">Fechar</button>
         </div>
     </div>
@@ -115,86 +117,49 @@
         <input type="text" id="inputParcelamento" placeholder="Ex: 4x de R$19,98">
         
         <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-            <button onclick="salvarProdutoForm()" class="btn-salvar" style="flex:1;">💾 Salvar (para todos)</button>
+            <button onclick="salvarProdutoForm()" class="btn-salvar" style="flex:1;">💾 Salvar Produto</button>
             <button onclick="fecharModalProduto()" class="btn-cancelar" style="flex:1;">Cancelar</button>
         </div>
     </div>
 
     <script>
-        // ========== CONFIGURAÇÃO ==========
-        // Usando JSONBin.io como banco de dados gratuito
-        const API_URL = 'https://api.jsonbin.io/v3/b/67f9e2e38960c979a5856a1c';
-        const API_KEY = '$2a$10$6YkHq.jKFx3yqEByE9cn7.YhuLtX2YqXz5lZqH5qXz5lZqH5qXz5l';
+        // ========== PRODUTOS PADRÃO ==========
+        let produtos = [
+            {
+                id: 1,
+                nome: "Fone Bluetooth 5.3 - 40h de bateria",
+                precoPromocional: 79.90,
+                precoOriginal: 149.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
+                linkShopee: "https://shopee.com.br/produto/123",
+                parcelamento: "4x de R$19,98 sem juros"
+            },
+            {
+                id: 2,
+                nome: "Smartwatch Esportivo + Monitor Cardíaco",
+                precoPromocional: 129.90,
+                precoOriginal: 299.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
+                linkShopee: "https://shopee.com.br/produto/456",
+                parcelamento: "6x de R$21,65"
+            }
+        ];
         
-        let produtos = [];
         let adminLogado = false;
         let editandoId = null;
         
-        // Carregar produtos do servidor (todos veem)
-        async function carregarProdutos() {
-            try {
-                const response = await fetch(API_URL, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
-                const data = await response.json();
-                if (data.record && data.record.produtos && data.record.produtos.length > 0) {
-                    produtos = data.record.produtos;
-                } else {
-                    // Produtos padrão
-                    produtos = [
-                        {
-                            id: 1,
-                            nome: "Fone Bluetooth 5.3 - 40h de bateria",
-                            precoPromocional: 79.90,
-                            precoOriginal: 149.90,
-                            imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
-                            linkShopee: "https://shopee.com.br/produto/123",
-                            parcelamento: "4x de R$19,98 sem juros"
-                        },
-                        {
-                            id: 2,
-                            nome: "Smartwatch Esportivo + Monitor Cardíaco",
-                            precoPromocional: 129.90,
-                            precoOriginal: 299.90,
-                            imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Smartwatch",
-                            linkShopee: "https://shopee.com.br/produto/456",
-                            parcelamento: "6x de R$21,65"
-                        }
-                    ];
-                    await salvarProdutosServidor();
-                }
-                renderizarProdutos();
-            } catch (error) {
-                console.error('Erro ao carregar:', error);
-                document.getElementById('productsContainer').innerHTML = '<div class="loading">❌ Erro ao carregar produtos. Tente novamente.</div>';
+        // Carregar produtos do localStorage (apenas para você)
+        function carregarProdutos() {
+            const salvos = localStorage.getItem('achadinhos_produtos');
+            if (salvos) {
+                produtos = JSON.parse(salvos);
             }
+            renderizarProdutos();
         }
         
-        // Salvar produtos no servidor
-        async function salvarProdutosServidor() {
-            try {
-                await fetch(API_URL, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
-                    },
-                    body: JSON.stringify({ produtos: produtos })
-                });
-                return true;
-            } catch (error) {
-                console.error('Erro ao salvar:', error);
-                return false;
-            }
-        }
-        
-        // Mostrar mensagem de sucesso
-        function mostrarMensagem() {
-            const msg = document.getElementById('salvoMsg');
-            if (msg) {
-                msg.style.display = 'block';
-                setTimeout(() => { msg.style.display = 'none'; }, 3000);
-            }
+        // Salvar produtos no localStorage
+        function salvarProdutosLocal() {
+            localStorage.setItem('achadinhos_produtos', JSON.stringify(produtos));
         }
         
         // Renderizar produtos na tela pública
@@ -202,7 +167,7 @@
             const container = document.getElementById('productsContainer');
             
             if (!produtos || produtos.length === 0) {
-                container.innerHTML = '<div class="loading">⚠️ Nenhum produto disponível no momento.</div>';
+                container.innerHTML = '<div style="text-align:center;padding:3rem;">⚠️ Nenhum produto disponível no momento.</div>';
                 return;
             }
             
@@ -272,7 +237,7 @@
                 document.getElementById('loginDiv').style.display = 'none';
                 document.getElementById('adminDiv').style.display = 'block';
                 atualizarListaAdmin();
-                alert('✅ Login realizado! As alterações salvarão para todos os clientes.');
+                alert('✅ Login realizado!');
             } else {
                 alert('❌ Senha incorreta!');
             }
@@ -350,81 +315,5 @@
             editandoId = null;
         }
         
-        async function salvarProdutoForm() {
+        function salvarProdutoForm() {
             const nome = document.getElementById('inputNome').value.trim();
-            const precoPromo = parseFloat(document.getElementById('inputPrecoPromo').value);
-            const precoOrig = parseFloat(document.getElementById('inputPrecoOrig').value);
-            const link = document.getElementById('inputLink').value.trim();
-            const imagem = document.getElementById('inputImagem').value.trim();
-            const parcelamento = document.getElementById('inputParcelamento').value.trim();
-            
-            if (!nome || isNaN(precoPromo) || isNaN(precoOrig) || !link) {
-                alert('❌ Preencha: Nome, Preços e Link da Shopee!');
-                return;
-            }
-            
-            const imagemFinal = imagem || 'https://via.placeholder.com/300x250/ee4d2d/white?text=Produto';
-            
-            if (editandoId) {
-                const index = produtos.findIndex(p => p.id === editandoId);
-                if (index !== -1) {
-                    produtos[index] = {
-                        ...produtos[index],
-                        nome: nome,
-                        precoPromocional: precoPromo,
-                        precoOriginal: precoOrig,
-                        linkShopee: link,
-                        imagem: imagemFinal,
-                        parcelamento: parcelamento || produtos[index].parcelamento
-                    };
-                }
-            } else {
-                produtos.push({
-                    id: Date.now(),
-                    nome: nome,
-                    precoPromocional: precoPromo,
-                    precoOriginal: precoOrig,
-                    linkShopee: link,
-                    imagem: imagemFinal,
-                    parcelamento: parcelamento || 'Até 3x sem juros'
-                });
-            }
-            
-            // Salvar no servidor para todos verem
-            const salvou = await salvarProdutosServidor();
-            if (salvou) {
-                renderizarProdutos();
-                atualizarListaAdmin();
-                fecharModalProduto();
-                mostrarMensagem();
-                alert('✅ Produto salvo com sucesso! Todos os clientes já veem a atualização.');
-            } else {
-                alert('❌ Erro ao salvar. Tente novamente.');
-            }
-        }
-        
-        async function excluirProduto(id) {
-            if (confirm('Tem certeza que deseja excluir este produto?')) {
-                produtos = produtos.filter(p => p.id !== id);
-                const salvou = await salvarProdutosServidor();
-                if (salvou) {
-                    renderizarProdutos();
-                    atualizarListaAdmin();
-                    mostrarMensagem();
-                    alert('🗑️ Produto excluído! Todos os clientes já veem a atualização.');
-                } else {
-                    alert('❌ Erro ao excluir. Tente novamente.');
-                }
-            }
-        }
-        
-        document.getElementById('inputImagem').addEventListener('input', atualizarPreviewImagem);
-        
-        // Inicializar
-        carregarProdutos();
-        
-        console.log('✅ Achadinhos W&J Shopee carregado!');
-        console.log('💡 Clique 5 vezes no rodapé → login admin123 → edite produtos → salva para todos automaticamente!');
-    </script>
-</body>
-</html>
