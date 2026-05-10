@@ -123,19 +123,19 @@
     </div>
 
     <script>
-        // ========== PRODUTOS (EDITAR AQUI PARA TODOS VEREM) ==========
-        
-            let produtos = [
-          {
-                    "id": 1778371279534,
-                    "nome": "Corta Vento Masculina Impermeável Semi Forrada PRETO",
-                    "precoPromocional": 59.3,
-                    "precoOriginal": 119.96,
-                    "linkShopee": "https://s.shopee.com.br/901uGZFJAo",
-                    "imagem": "https://down-br.img.susercontent.com/file/br-11134207-81z1k-mgdobxintsef6c@resize_w900_nl.webp",
-                    "parcelamento": "Até 3x"
-          }
-];
+        // ⚠️ ESTA É A LISTA DE PRODUTOS QUE TODOS VEEM ⚠️
+        // QUANDO VOCÊ GERAR O CÓDIGO, COLE AQUI DENTRO!
+        let produtos = [
+            {
+                id: 1,
+                nome: "Fone Bluetooth 5.3 - 40h de bateria",
+                precoPromocional: 79.90,
+                precoOriginal: 149.90,
+                imagem: "https://via.placeholder.com/300x250/ee4d2d/white?text=Fone+Bluetooth",
+                linkShopee: "https://shopee.com.br/produto/123",
+                parcelamento: "4x de R$19,98 sem juros"
+            },
+            {
                 id: 2,
                 nome: "Smartwatch Esportivo + Monitor Cardíaco",
                 precoPromocional: 129.90,
@@ -149,12 +149,12 @@
         let adminLogado = false;
         let editandoId = null;
         
-        // Salvar no localStorage (apenas para visualização)
-        function salvarLocal() {
+        // Salvar edições temporárias (só para você durante a sessão)
+        function salvarTemp() {
             localStorage.setItem('produtos_temp', JSON.stringify(produtos));
         }
         
-        function carregarLocal() {
+        function carregarTemp() {
             const temp = localStorage.getItem('produtos_temp');
             if (temp) {
                 produtos = JSON.parse(temp);
@@ -192,7 +192,7 @@
             cliqueRodape++;
             if(cliqueRodape === 5) {
                 document.getElementById('adminBtn').style.display = 'flex';
-                alert('🔧 Modo admin liberado!');
+                alert('🔧 Modo admin liberado! Clique no botão laranja.');
                 cliqueRodape = 0;
             }
             setTimeout(() => cliqueRodape = 0, 3000);
@@ -218,12 +218,13 @@
         }
         
         function fazerLogin() {
-            if (document.getElementById('senhaAdmin').value === '071412') {
+            const senha = document.getElementById('senhaAdmin').value;
+            if (senha === 'admin123') {
                 adminLogado = true;
                 document.getElementById('loginDiv').style.display = 'none';
                 document.getElementById('adminDiv').style.display = 'block';
                 atualizarListaAdmin();
-                alert('✅ Login realizado!');
+                alert('✅ Login realizado! Edite os produtos e clique em "GERAR CÓDIGO".');
             } else { alert('❌ Senha incorreta!'); }
         }
         
@@ -254,7 +255,7 @@
             if (id) {
                 const prod = produtos.find(p => p.id === id);
                 if (prod) {
-                    titulo.innerText = '✏️ Editar';
+                    titulo.innerText = '✏️ Editar Produto';
                     document.getElementById('inputNome').value = prod.nome;
                     document.getElementById('inputPrecoPromo').value = prod.precoPromocional;
                     document.getElementById('inputPrecoOrig').value = prod.precoOriginal;
@@ -264,7 +265,7 @@
                     atualizarPreviewImagem();
                 }
             } else {
-                titulo.innerText = '➕ Adicionar';
+                titulo.innerText = '➕ Adicionar Produto';
                 document.getElementById('inputNome').value = '';
                 document.getElementById('inputPrecoPromo').value = '';
                 document.getElementById('inputPrecoOrig').value = '';
@@ -294,21 +295,21 @@
             if (editandoId) {
                 const index = produtos.findIndex(p => p.id === editandoId);
                 if (index !== -1) { produtos[index] = { ...produtos[index], nome, precoPromocional: precoPromo, precoOriginal: precoOrig, linkShopee: link, imagem, parcelamento: parcelamento || produtos[index].parcelamento }; }
-            } else { produtos.push({ id: Date.now(), nome, precoPromocional: precoPromo, precoOriginal: precoOrig, linkShopee: link, imagem, parcelamento: parcelamento || 'Até 3x' }); }
-            salvarLocal();
+            } else { produtos.push({ id: Date.now(), nome, precoPromocional: precoPromo, precoOriginal: precoOrig, linkShopee: link, imagem, parcelamento: parcelamento || 'Até 3x sem juros' }); }
+            salvarTemp();
             renderizarProdutos();
             atualizarListaAdmin();
             fecharModalProduto();
-            alert('✅ Produto salvo! Clique em "GERAR CÓDIGO" para atualizar o site para todos.');
+            alert('✅ Produto salvo! Agora clique em "GERAR CÓDIGO" e cole no GitHub.');
         }
         
         function excluirProduto(id) {
-            if (confirm('Excluir?')) {
+            if (confirm('Excluir este produto?')) {
                 produtos = produtos.filter(p => p.id !== id);
-                salvarLocal();
+                salvarTemp();
                 renderizarProdutos();
                 atualizarListaAdmin();
-                alert('🗑️ Excluído!');
+                alert('🗑️ Produto excluído! Clique em "GERAR CÓDIGO" para atualizar o GitHub.');
             }
         }
         
@@ -319,17 +320,25 @@
             modal.innerHTML = `
                 <div style="background:white;padding:2rem;border-radius:1rem;max-width:90%;max-height:90%;overflow:auto;width:600px;">
                     <h3>📋 Copie o código abaixo</h3>
-                    <p style="margin:1rem 0;font-size:0.8rem;">1. Copie<br>2. Vá no GitHub → index.html<br>3. Encontre "let produtos = ["<br>4. Cole substituindo<br>5. Commit changes</p>
-                    <textarea style="width:100%;height:250px;font-family:monospace;font-size:0.7rem;" readonly>let produtos = ${produtosJSON};</textarea>
-                    <button onclick="navigator.clipboard.writeText('let produtos = ${produtosJSON};')" style="background:#10b981;color:white;border:none;padding:0.5rem 1rem;border-radius:0.5rem;margin-top:1rem;cursor:pointer;">📋 Copiar</button>
-                    <button onclick="this.parentElement.parentElement.remove()" style="background:#64748b;color:white;border:none;padding:0.5rem 1rem;border-radius:0.5rem;margin-top:1rem;margin-left:0.5rem;cursor:pointer;">Fechar</button>
+                    <p style="margin:1rem 0;font-size:0.8rem;"><strong>PASSO A PASSO:</strong><br>
+                    1. Clique em "Copiar"<br>
+                    2. Vá no GitHub → seu repositório → index.html<br>
+                    3. Clique no lápis ✏️ (Editar)<br>
+                    4. Encontre a linha "let produtos = ["<br>
+                    5. Selecione até o "];" e cole<br>
+                    6. Clique em "Commit changes"</p>
+                    <textarea style="width:100%;height:200px;font-family:monospace;font-size:0.7rem;" readonly>let produtos = ${produtosJSON};</textarea>
+                    <br><br>
+                    <button onclick="navigator.clipboard.writeText('let produtos = ${produtosJSON};')" style="background:#10b981;color:white;border:none;padding:0.5rem 1rem;border-radius:0.5rem;margin-top:0.5rem;cursor:pointer;">📋 Copiar Código</button>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background:#64748b;color:white;border:none;padding:0.5rem 1rem;border-radius:0.5rem;margin-top:0.5rem;margin-left:0.5rem;cursor:pointer;">Fechar</button>
                 </div>
             `;
             document.body.appendChild(modal);
         }
         
         document.getElementById('inputImagem').addEventListener('input', atualizarPreviewImagem);
-        carregarLocal();
+        carregarTemp();
+        console.log('✅ Site carregado! Clique 5x no rodapé para admin.');
     </script>
 </body>
 </html>
